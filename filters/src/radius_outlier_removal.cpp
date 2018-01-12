@@ -40,11 +40,16 @@
 
 #include <pcl/filters/impl/radius_outlier_removal.hpp>
 #include <pcl/conversions.h>
+//
+#include <fstream>
+#include <iostream>
 
+double point_cloud_number_ = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &output)
 {
+  point_cloud_number_++;
   output.is_dense = true;
   // If fields x/y/z are not present, we cannot filter
   if (x_idx_ == -1 || y_idx_ == -1 || z_idx_ == -1)
@@ -90,13 +95,27 @@ pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &out
 
   int nr_p = 0;
   int nr_removed_p = 0;
+  
+  //Create results file and open it
+  std::stringstream sstm;
+  sstm << "//home//nick//catkin_ws//src//lidar_snow_removal//filtering_snow//results//ROR//results" << point_cloud_number_ << ".txt";
+  std::string path_local = sstm.str();
+  std::ofstream resultsFile;
+  resultsFile.open (path_local.c_str());
+
   // Go over all the points and check which doesn't have enough neighbors
   for (int cp = 0; cp < static_cast<int> (indices_->size ()); ++cp)
   {
+    float x_i = cloud->points[(*indices_)[cp]].x;
+    float y_i = cloud->points[(*indices_)[cp]].y;
+    // output data into results file
+    resultsFile << std::fixed << std::setprecision(6) << x_i << ", " << y_i << ", ";
+
     int k = tree_->radiusSearch ((*indices_)[cp], search_radius_, nn_indices, nn_dists);
     // Check if the number of neighbors is larger than the user imposed limit
     if (k < min_pts_radius_)
     {
+      resultsFile << std::fixed << std::setprecision(0) << 1 << ", "<< std::endl;
       if (extract_removed_indices_)
       {
         (*removed_indices_)[nr_removed_p] = cp;
@@ -104,11 +123,18 @@ pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &out
       }
       continue;
     }
+    else
+    {
+      resultsFile << std::fixed << std::setprecision(0) << 0 << ", " << std::endl;
+    }
 
     memcpy (&output.data[nr_p * output.point_step], &input_->data[(*indices_)[cp] * output.point_step],
             output.point_step);
     nr_p++;
   }
+  //
+  resultsFile.close();
+  //
 
   output.width = nr_p;
   output.height = 1;
@@ -126,4 +152,3 @@ pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &out
 PCL_INSTANTIATE(RadiusOutlierRemoval, PCL_XYZ_POINT_TYPES)
 
 #endif    // PCL_NO_PRECOMPILE
-

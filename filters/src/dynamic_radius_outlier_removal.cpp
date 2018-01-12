@@ -114,14 +114,12 @@ pcl::DynamicRadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointClou
   int nr_p = 0;
   int nr_removed_p = 0;
 
-  /*
   //Create results file and open it
   std::stringstream sstm;
-  sstm << "//home//nick//catkin_ws//src//lidar_snow_removal//filtering_snow//results//customROF//results" << point_cloud_number_custom << ".txt";
+  sstm << "//home//nick//catkin_ws//src//lidar_snow_removal//filtering_snow//results//DROR//results" << point_cloud_number_dynamic << ".txt";
   std::string path_local = sstm.str();
   std::ofstream resultsFile;
   resultsFile.open (path_local.c_str());
-  */
 
   // Go over all the points and check which doesn't have enough neighbors
   for (int cp = 0; cp < static_cast<int> (indices_->size ()); ++cp)
@@ -131,7 +129,7 @@ pcl::DynamicRadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointClou
     //float z_i = cloud->points[(*indices_)[cp]].z;
 
     // output data into results file
-    //resultsFile << std::fixed << std::setprecision(6) << x_i << ", " << y_i << ", ";
+    resultsFile << std::fixed << std::setprecision(6) << x_i << ", " << y_i << ", ";
 
     float range_i = sqrt( pow (x_i, 2) + pow (y_i, 2));
     float search_radius_dynamic_ = radius_multiplier_ * azimuth_angle_ *
@@ -147,7 +145,7 @@ pcl::DynamicRadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointClou
     // Check if the number of neighbors is larger than the user imposed limit
     if (k < min_pts_radius_)
     {
-      //resultsFile << std::fixed << std::setprecision(0) << 1 << ", "<< std::endl;
+      resultsFile << std::fixed << std::setprecision(0) << 1 << ", "<< std::endl;
       if (extract_removed_indices_)
       {
         (*removed_indices_)[nr_removed_p] = cp;
@@ -157,14 +155,14 @@ pcl::DynamicRadiusOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointClou
     }
     else
     {
-      //resultsFile << std::fixed << std::setprecision(0) << 0 << ", " << std::endl;
+      resultsFile << std::fixed << std::setprecision(0) << 0 << ", " << std::endl;
     }
 
     memcpy (&output.data[nr_p * output.point_step], &input_->data[(*indices_)[cp] * output.point_step],
             output.point_step);
     nr_p++;
   }
-  //resultsFile.close();
+  resultsFile.close();
 
   output.width = nr_p;
   output.height = 1;
